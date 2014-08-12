@@ -4,11 +4,8 @@
 
 #include "internal_CiUtils.h"
 #include "NetUtil.h"
-#include "CiSafeString.h"
 #include "NetworkThread.h"
 #include "CiSocket.h"
-
-#include "CiLogger.h"
 
 #if defined(_WIN32) && defined(_DEBUG)
 #define new DEBUG_NEW
@@ -329,19 +326,6 @@ void CNetworkThread::SetTimeoutMillisec(int iTimeoutMillisec)
 	m_iTimeoutMillisec = iTimeoutMillisec;
 }
 
-/* This member function breaks the abstraction of this class severely */
-/* CNetworkThread should encapsulate all the network properties to simplify */
-/* the implementation of the derived classes. */
-/* This member function is now needed in Khufu session initialization process. */
-/* But it should be deleted as soon as possible. */
-int CNetworkThread::GetListenSocketFD()
-{
-	if ( m_pListenSocket == NULL )
-		return NU_INVALID_SOCKET;
-
-	return m_pListenSocket->m_iSocket;
-}
-
 /* socket set management */
 CCiSocket* CNetworkThread::FindSocket(int iSocketFD, bool bReadCase)
 {
@@ -492,106 +476,6 @@ bool CNetworkThread::OnReadSocketError(CCiSocket* pSocket)
 	DeleteWriteSocket(pSocket, true);
 	DeleteReadSocket(pSocket, true);
 	delete pSocket;
-	return true;
-}
-
-bool CNetworkThread::OnWriteSocketError(CCiSocket* pSocket)
-{
-	if ( pSocket == NULL ) {
-		return false;
-	}
-
-	DisableSocket(pSocket);
-	DeleteReadSocket(pSocket, true);
-	DeleteWriteSocket(pSocket, true);
-	delete pSocket;
-	return true;
-}
-
-
-bool CNetworkThread::DeleteDisabledReadSockets(bool bPreserve)
-{
-	int iMaxFDSize = GetMaxFDSize();
-	for ( int i = 0; i < iMaxFDSize; i++ )
-	{
-		if ( m_ReadSockets[i]->m_iSocket == NU_INVALID_SOCKET )
-		{
-			if ( bPreserve == false ) {
-				delete m_ReadSockets[i];
-			}
-			m_ReadSockets[i] = NULL;
-			m_iReadSocketCount--;
-			//return true;
-		}
-	}
-
-	return true;
-}
-
-bool CNetworkThread::DeleteDisabledWriteSockets(bool bPreserve)
-{
-	int iMaxFDSize = GetMaxFDSize();
-	for ( int i = 0; i < iMaxFDSize; i++ )
-	{
-		if ( m_WriteSockets[i]->m_iSocket == NU_INVALID_SOCKET )
-		{
-			if ( bPreserve == false ) {
-				delete m_WriteSockets[i];
-			}
-			m_WriteSockets[i] = NULL;
-			m_iWriteSocketCount--;
-			//return true;
-		}
-	}
-
-	return true;
-}
-
-bool CNetworkThread::CheckWriteOperation(CCiSocket* pSocket)
-{
-	if ( pSocket == NULL )
-		return false;
-
-	if ( pSocket->m_iSocket == NU_INVALID_SOCKET )
-		return false;
-
-	if ( pSocket->GetRemainSendDataSize() > 0 )
-	{
-		if ( FindSocket(pSocket->m_iSocket, false) == NULL )
-		{
-#ifdef _WIN32
-			FDSetAdd(pSocket, false);
-#else
-			pollfd *pPollFD = FindPollFD(pSocket);
-			if ( pPollFD != NULL )
-				PollFDEnable(pPollFD, false);
-			else
-				PollFDAdd(pSocket, false);
-#endif
-			return AddWriteSocket(pSocket);
-		}
-	}
-
-	return true;
-}
-
-bool CNetworkThread::AddReadOperation(CCiSocket* pSocket)
-{
-	if ( FindSocket(pSocket->m_iSocket, true) == NULL )
-	{
-#ifdef _WIN32
-		FDSetAdd(pSocket);
-#else
-		pollfd *pPollFD = FindPollFD(pSocket);
-		if ( pPollFD != NULL )
-			PollFDEnable(pPollFD);
-		else
-			PollFDAdd(pSocket);
-#endif
-
-		return AddReadSocket(pSocket);
-	}
-
 	return true;
 }
 
@@ -1122,26 +1006,4 @@ bool CNetworkThread::DoWrite(CCiSocket *pWriteSocket)
 
 	/* Flush is needed */
 	return pWriteSocket->WriteFromBufferToNetwork();
-}
-
-void CNetworkThread::SetListenPortNumber(int iListenPortNumber)
-{
-	m_iListenPortNumber = iListenPortNumber;
-}
-
-void CNetworkThread::SetListenIPAddr(std::string listenIPAddr)
-{
-	m_ListenIPAddr = listenIPAddr;
-}
-
-void CNetworkThread::CloseListenSocket()
-{//junaria
-
-	if ( m_pListenSocket != NULL )
-	{
-		m_pListenSocket->Disconnect();
-		delete m_pListenSocket;
-		m_pListenSocket = NULL;
-	}
-
 }
