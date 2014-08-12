@@ -1,0 +1,38 @@
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CiHB", "legacy_linux\CiHB.vcproj", "{DC11E464-3D50-490D-A8E1-FE1A4223BC9C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CiUtils", "Externals\CiUtils\Src\CiUtils.vcproj", "{5B690E4D-B2D2-4723-91BB-5023DB213822}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C4B18CD0-B71A-4E94-AB8D-6A93C46A2589}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C4B18CD0-B71A-4E94-AB8D-6A93C46A2589}.Debug|Win32.Build.0 = Debug|Win32
+		{C4B18CD0-B71A-4E94-AB8D-6A93C46A2589}.Release|Win32.ActiveCfg = Release|Win32
+		{C4B18CD0-B71A-4E94-AB8D-6A93C46A2589}.Release|Win32.Build.0 = Release|Win32
+		{DC11E464-3D50-490D-A8E1-FE1A4223BC9C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DC11E464-3D50-490D-A8E1-FE1A4223BC9C}.Debug|Win32.Build.0 = Debug|Win32
+		{DC11E464-3D50-490D-A8E1-FE1A4223BC9C}.Release|Win32.ActiveCfg = Release|Win32
+		{DC11E464-3D50-490D-A8E1-FE1A4223BC9C}.Release|Win32.Build.0 = Release|Win32
+		{18457E74-4E0B-4FEA-BF81-78FD665A0BE0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{18457E74-4E0B-4FEA-BF81-78FD665A0BE0}.Debug|Win32.Build.0 = Debug|Win32
+		{18457E74-4E0B-4FEA-BF81-78FD665A0BE0}.Release|Win32.ActiveCfg = Release|Win32
+		{18457E74-4E0B-4FEA-BF81-78FD665A0BE0}.Release|Win32.Build.0 = Release|Win32
+		{7252C011-40A6-4156-8F28-89324FCF3536}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7252C011-40A6-4156-8F28-89324FCF3536}.Debug|Win32.Build.0 = Debug|Win32
+		{7252C011-40A6-4156-8F28-89324FCF3536}.Release|Win32.ActiveCfg = Release|Win32
+		{7252C011-40A6-4156-8F28-89324FCF3536}.Release|Win32.Build.0 = Release|Win32
+		{5B690E4D-B2D2-4723-91BB-5023DB213822}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5B690E4D-B2D2-4723-91BB-5023DB213822}.Release|Win32.ActiveCfg = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(DPCodeReviewSolutionGUID) = preSolution
+		DPCodeReviewSolutionGUID = {00000000-0000-0000-0000-000000000000}
+	EndGlobalSection
+EndGlobal

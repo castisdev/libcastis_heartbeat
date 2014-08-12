@@ -1,0 +1,48 @@
+[ver 1.5.8]
+release : 2013-10-30
+개발자 : 장세연
+- NEW : CiMediaType.h 에 HEVC 추가
+
+[ver 1.5.7]
+release : 2013-05-13
+개발자 : 미디어 솔루션 개발1팀 박민우
+- NEW : castis::microsleep(unsigned long usec) 추가 (microsecond 단위 sleep)
+
+[ver 1.5.6]
+release : 2013-04-03
+개발자 : 미디어 솔루션 개발1팀 양경모
+- NEW : CI_UUID_LENGTH 추가 (VideoServerLibs->VideoServerBase->Session.h 에서 이동)
+
+[ver 1.5.5]
+release : 2011-06-21
+- CHG : strtok 사용 할 수 없도록 수정
+- CHG : strtok 대신 strtok_s , strtok_r 쓰도록 수정
+
+[ver 1.5.3]
+release : 2007-06-29
+- CHG : CiFunctors.h 삭제 - struct DeleteObjectPtr 은 template struct boost::checked_deleter 로 대체 가능함
+- NEW : CiMediaType : SYSTEM_ASF / Element eVideoVC1 , eAUDIOWMA2 추가
+
+[ver 1.5.2]
+release : 2007-05-17
+- CHG : CiMediaType 수정 - audio type, video type은 ElementType으로 통합. MediaType의 정의 변경. Definition.Media.MediaType 참고( MediaLibs/Doc )
+
+[ver 1.5.1]
+release : 2007-04-16
+- CHG: MPEG2 audio string 누락 추가( from rev.7773, MPEG2 Audio string is gone )
+- CHG: AAC 제거
+- CHG: MPEG2-AAC / MPEG4-AAC string을 AAC로 변경(stream type에 구분없음)
+
+[version 1.5]
+
+릴리즈 날짜 : 2007-03-29
+
+- CHG: CiMediaType 수정. 더이상 system, video, audio type 을 가지는 구조체를 갖지 않음.
+- CHG: wince, client sdk, mips 코드 삭제
+- CHG: CiBool_t, CI_TRUE, CI_FALSE 삭제
+- CHG: #ifdef __cplusplus 삭제
+- CHG: linux 용 trace 매크로 추가
+- CHG: extern "C" 삭제
+- NEW: castis::msleep 함수 추가(millisecond sleep)
+- NEW: bsd/win socket errno 의 이식성을 위한 CiSocketError.h 추가
+- CHG: 모든 공백 문자 제거
