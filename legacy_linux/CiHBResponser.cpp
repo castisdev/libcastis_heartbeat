@@ -1,28 +1,17 @@
-// CiHBResponser.cpp: implementation of the CCiHBResponser class.
-//
-//////////////////////////////////////////////////////////////////////
-
 #include "stdafx.h"
 #include "CiHBResponser.h"
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
+#include <boost/scoped_array.hpp>
 
-CCiHBResponser::CCiHBResponser(const char *szRepresentativeIP,
+CCiHBResponser::CCiHBResponser(const std::string& szRepresentativeIP,
 							   unsigned short iPortNumber,
-							   const char *szLocalIP,
-							   CiThread2Handle_t complexThreadHandle)
+							   const std::string& szLocalIP)
 : CNetworkThread(NU_INVALID_PORT_NUMBER)
 {
-	int iNTriedToCreate;
-
-	m_ciThreadHandle = complexThreadHandle;
-
 	m_pSocket = NULL;
-	CiStrCpy(m_szRepresentativeIP, szRepresentativeIP, CI_MAX_IP_ADDRESS_LENGTH+1, &iNTriedToCreate);
+	m_szRepresentativeIP = szRepresentativeIP;
 	m_iPortNumber = iPortNumber;
-	CiStrCpy(m_szLocalIP, szLocalIP, CI_MAX_IP_ADDRESS_LENGTH+1, &iNTriedToCreate);
+	m_szLocalIP = szLocalIP;
 
 	m_processState = CIHB_STATE_ALIVE;
 }
@@ -41,39 +30,18 @@ bool CCiHBResponser::InitInstance()
 	int sockfd;
 	if ( nu_create_udp_socket(&sockfd) == false )
 	{
-		char szString[256];
-#ifdef _WIN32
-		snprintf(szString, 255, "CCiHBResponser::InitInstance :: create udp socket fail (%d)", GetLastError());
-#else
-		snprintf(szString, 255, "CCiHBResponser::InitInstance :: create udp socket fail (%s)", strerror(errno));
-#endif
-		CiUtils_PrintWithTime(stderr, szString);
-
 		return false;
 	}
-
 
 	/* reuse_addr option */
 	if ( nu_set_reuse_addr(sockfd, true) == false )
 	{
-		char szString[256];
-		snprintf(szString, 255, "CCiHBResponser::InitInstance :: set_reuse_addr fail (%s)", strerror(errno));
-		CiUtils_PrintWithTime(stderr, szString);
-
 		return false;
 	}
 
 	/* bind */
 	if ( nu_bind(sockfd, m_iPortNumber) == false )
 	{
-		char szString[256];
-#ifdef _WIN32
-		snprintf(szString, 255, "CCiHBResponser::InitInstance :: bind(port %d) fail (%d)", m_iPortNumber, GetLastError());
-#else
-		snprintf(szString, 255, "CCiHBResponser::InitInstance :: bind(port %d) fail (%s)", m_iPortNumber, strerror(errno));
-#endif
-		CiUtils_PrintWithTime(stderr, szString);
-
 		return false;
 	}
 
@@ -82,23 +50,13 @@ bool CCiHBResponser::InitInstance()
 	CCiSocket *pReadSocket = new CCiSocket(sockfd, CI_SOCKET_UDP, 1024, 1024);
 	if ( pReadSocket == NULL )
 	{
-		char szString[256];
-		snprintf(szString, 255, " (ThHandle %lu) CCiHBResponser::InitInstance :: allocation for CCiSocket fail", GetHandle());
-		CiUtils_PrintWithTime(stderr, szString);
-
 #ifdef _WIN32
 		if ( closesocket(sockfd) != 0 )
 #else
 		if ( close(sockfd) < 0 )
 #endif
 		{
-			char szString[256];
-#ifdef _WIN32
-			snprintf(szString, 255, "CCiHBResponser::InitInstance :: close(sockfd %d) fail (%d)", sockfd, GetLastError());
-#else
-			snprintf(szString, 255, "CCiHBResponser::InitInstance :: close(sockfd %d) fail (%s)", sockfd, strerror(errno));
-#endif
-			CiUtils_PrintWithTime(stderr, szString);
+			// do nothing
 		}
 
 		return false;
@@ -148,9 +106,6 @@ ReceiveIntMessageResult_t CCiHBResponser::ReceiveIntMessage(CCiSocket *pReadSock
 		return RECEIVE_INT_MESSAGE_FALSE;
 	}
 
-	CMTime2 mtCurTime;
-	m_mtRecvTime = mtCurTime;
-
 #ifdef _WIN32
 	int saRecvLen = sizeof(m_saRecv);
 #else
@@ -160,23 +115,11 @@ ReceiveIntMessageResult_t CCiHBResponser::ReceiveIntMessage(CCiSocket *pReadSock
 	int nRead = recvfrom(pReadSocket->m_iSocket, m_szRecvBuf, 8, 0, &m_saRecv, &saRecvLen);
 	if ( nRead < 0 )
 	{
-		char szString[256];
-#ifdef _WIN32
-		snprintf(szString, 255, "CCiHBResponser::ReceiveIntMessage :: recvfrom fail (%d)", GetLastError());
-#else
-		snprintf(szString, 255, "CCiHBResponser::ReceiveIntMessage :: recvfrom fail (%s)", strerror(errno));
-#endif
-		CiUtils_PrintWithTime(stderr, szString);
-
 		return RECEIVE_INT_MESSAGE_FALSE;
 	}
 
 	if ( nRead != 8 )
 	{
-		char szString[256];
-		snprintf(szString, 255, "CCiHBResponser::ReceiveIntMessage :: recvfrom fail (nRead != %d)", 8);
-		CiUtils_PrintWithTime(stderr, szString);
-
 		return RECEIVE_INT_MESSAGE_FALSE;
 	}
 
@@ -186,27 +129,6 @@ ReceiveIntMessageResult_t CCiHBResponser::ReceiveIntMessage(CCiSocket *pReadSock
 	memcpy((void*)&iTemp, p, 4);
 	*piReceivedMessage = ntohl(iTemp);
 	p = p + 4;
-
-	/* get peer address from m_saRecv */
-	char szPeerIPAddress[CI_MAX_IP_ADDRESS_LENGTH+1];
-	unsigned short usPeerPortNumber;
-	if ( nu_get_address((struct sockaddr_in *)&m_saRecv, (unsigned char *)szPeerIPAddress, &usPeerPortNumber) == false )
-	{
-		char szString[256];
-		snprintf(szString, 255, "CCiHBResponser::ReceiveIntMessage :: nu_get_address fail");
-		CiUtils_PrintWithTime(stderr, szString);
-
-		CiStrInit(szPeerIPAddress);
-		usPeerPortNumber = 0;
-	}
-
-#ifdef _DEBUG
-	char szString[256];
-	snprintf(szString, 255,
-			"CCiHBResponser::ReceiveIntMessage :: recvfrom (%s:%u)",
-			szPeerIPAddress, usPeerPortNumber);
-	CiUtils_PrintWithTime(stdout, szString);
-#endif
 
 	return RECEIVE_INT_MESSAGE_TRUE;
 }
@@ -223,12 +145,7 @@ bool CCiHBResponser::OnMessage(CCiSocket *pReadSocket, int iMessage)
 			break;
 
 		default:
-
-			char szString[256];
-			snprintf(szString, 255, "CCiHBResponser::OnMessage :: invalid message (%d)", iMessage);
-			CiUtils_PrintWithTime(stderr, szString);
-
-			break;
+			return false;
 	}
 
 	return true;
@@ -236,17 +153,14 @@ bool CCiHBResponser::OnMessage(CCiSocket *pReadSocket, int iMessage)
 
 bool CCiHBResponser::OnHeartbeatRequest(CCiSocket *pReadSocket)
 {
-	char *p = NULL;
-
 	/* request format : seq_num */
 	/* parse request */
-	int iSeqNum;
-	p = m_szRecvBuf + 4;		/* m_szRecvBuf : MessageType + SeqNum */
+	char *p = m_szRecvBuf + 4;		/* m_szRecvBuf : MessageType + SeqNum */
 
 	/* now, p points to seq_num */
 	int iTemp;
 	memcpy((void*)&iTemp, p, 4);
-	iSeqNum = ntohl(iTemp);
+	int iSeqNum = ntohl(iTemp);
 	p = p + 4;
 
 	return SendHeartbeatResponse(pReadSocket, iSeqNum);
@@ -254,20 +168,14 @@ bool CCiHBResponser::OnHeartbeatRequest(CCiSocket *pReadSocket)
 
 bool CCiHBResponser::SendHeartbeatResponse(CCiSocket *pReadSocket, int iSeqNum)
 {
-	int iMsgStrSize;
-	char *pMsgStr = NULL;
-	int iIPLength = 0;
-	char *p = NULL;
-	int iTemp = 0;
-
 	/* response format :
 	 * msg_type + seq_num + representative ip length + representative ip + state + local ip length + local ip */
 
-	iMsgStrSize = 4 + 4 + 4 + CiStrLen(m_szRepresentativeIP) + 4 + 4 + CiStrLen(m_szLocalIP);
-	pMsgStr = new char[iMsgStrSize];
-	p = pMsgStr;
+	int iMsgStrSize = 4 + 4 + 4 + m_szRepresentativeIP.length() + 4 + 4 + m_szLocalIP.length();
+	boost::scoped_array<char> pMsgStr(new char[iMsgStrSize]);
+	char *p = pMsgStr.get();
 
-	iTemp = htonl(CIHB_HEARTBEAT_RESPONSE);
+	int iTemp = htonl(CIHB_HEARTBEAT_RESPONSE);
 	memcpy(p, (void*)&iTemp, 4);
 	p = p + 4;
 
@@ -275,76 +183,38 @@ bool CCiHBResponser::SendHeartbeatResponse(CCiSocket *pReadSocket, int iSeqNum)
 	memcpy(p, (void*)&iTemp, 4);
 	p = p + 4;
 
-	iIPLength = CiStrLen(m_szRepresentativeIP);
+	int iIPLength = m_szRepresentativeIP.length();
 	iTemp = htonl(iIPLength);
 	memcpy(p, (void*)&iTemp, 4);
 	p = p + 4;
 
-	memcpy(p, (void*)m_szRepresentativeIP, CiStrLen(m_szRepresentativeIP));
-	p = p + CiStrLen(m_szRepresentativeIP);
+	memcpy(p, m_szRepresentativeIP.c_str(), m_szRepresentativeIP.length());
+	p = p + m_szRepresentativeIP.length();
 
 	iTemp = htonl(m_processState);
 	memcpy(p, (void*)&iTemp, 4);
 	p = p + 4;
 
-	iIPLength = CiStrLen(m_szLocalIP);
+	iIPLength = m_szLocalIP.length();
 	iTemp = htonl(iIPLength);
 	memcpy(p, (void*)&iTemp, 4);
 	p = p + 4;
 
-	memcpy(p, (void*)m_szLocalIP, CiStrLen(m_szLocalIP));
-	p = p + CiStrLen(m_szLocalIP);
+	memcpy(p, m_szLocalIP.c_str(), m_szLocalIP.length());
+	p = p + m_szLocalIP.length();
 
 	/* send response */
 
-	int	nSend = sendto(pReadSocket->m_iSocket, pMsgStr, iMsgStrSize, 0, &m_saRecv, sizeof(m_saRecv));
+	int	nSend = sendto(pReadSocket->m_iSocket, pMsgStr.get(), iMsgStrSize, 0, &m_saRecv, sizeof(m_saRecv));
 	if ( nSend < 0 )
 	{
-		char szString[256];
-#ifdef _WIN32
-		snprintf(szString, 255, "CCiHBResponser::SendHeartbeatResponse :: sendto fail (%d)", GetLastError());
-#else
-		snprintf(szString, 255, "CCiHBResponser::SendHeartbeatResponse :: sendto fail (%s)", strerror(errno));
-#endif
-		CiUtils_PrintWithTime(stderr, szString);
-
 		return false;
 	}
 
 	if ( nSend != iMsgStrSize )
 	{
-		char szString[256];
-		snprintf(szString, 255,
-				"CCiHBResponser::SendHeartbeatResponse :: sendto fail (nSend != %d)", iMsgStrSize);
-		CiUtils_PrintWithTime(stderr, szString);
-
 		return false;
 	}
-
-	/* get peer address from m_saRecv */
-	char szPeerIPAddress[CI_MAX_IP_ADDRESS_LENGTH+1];
-	unsigned short usPeerPortNumber;
-	if ( nu_get_address((struct sockaddr_in *)&m_saRecv, (unsigned char *)szPeerIPAddress, &usPeerPortNumber) == false )
-	{
-		char szString[256];
-		snprintf(szString, 255,
-				"CCiHBResponser::SendHeartbeatResponse :: nu_get_address fail");
-		CiUtils_PrintWithTime(stderr, szString);
-
-		CiStrInit(szPeerIPAddress);
-		usPeerPortNumber = 0;
-	}
-
-#ifdef _DEBUG
-	char szString[256];
-	snprintf(szString, 255,
-			"CCiHBResponser::SendHeartbeatResponse :: %d bytes sendto (%s:%u)",
-			iMsgStrSize, szPeerIPAddress, usPeerPortNumber);
-	CiUtils_PrintWithTime(stdout, szString);
-#endif
-
-	if ( pMsgStr != NULL )
-		delete [] pMsgStr;
 
 	return true;
 }

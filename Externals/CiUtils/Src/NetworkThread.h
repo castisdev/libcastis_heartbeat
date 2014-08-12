@@ -85,8 +85,6 @@ private:
 	const int m_iMaxFDSize;
 
 public:
-	void CloseListenSocket();
-
 	int GetMaxFDSize() const { return m_iMaxFDSize; }
 
 	int GetConnectedSocketSendBufferSize() const { return m_iConnectedSocketSendBufferSize; }
@@ -113,18 +111,6 @@ public:
 	/* select/poll timeout */
 	void SetTimeoutMillisec(int iTimeoutMillisec);
 
-	/* 2004.07.21 NURI */
-	/* before InitInstance() called, m_iListenPortNumber can be changed */
-	void SetListenPortNumber(int iListenPortNumber);
-	void SetListenIPAddr(std::string listenIPAddr);
-
-	/* This member function breaks the abstraction of this class severely */
-	/* CNetworkThread should encapsulate all the network properties to simplify */
-	/* the implementation of the derived classes. */
-	/* This member function is now needed in Khufu session initialization process. */
-	/* But it should be deleted as soon as possible. */
-	int GetListenSocketFD();
-
 	/* socket set management */
 	CCiSocket* FindSocket(int iSocketFD, bool bReadCase = true);
 	bool AddReadSocket(CCiSocket* pReadSocket);
@@ -134,13 +120,7 @@ public:
 
 	/* disable a socket in case of internal errors */
 	bool DisableSocket(CCiSocket* pSocket);
-	bool DeleteDisabledReadSockets(bool bPreserve = false);
-	bool DeleteDisabledWriteSockets(bool bPreserve = false);
 	virtual bool OnReadSocketError(CCiSocket* pSocket);
-	virtual bool OnWriteSocketError(CCiSocket* pSocket);
-
-	bool CheckWriteOperation(CCiSocket* pSocket);
-	bool AddReadOperation(CCiSocket* pSocket);
 
 	// implementations
 	virtual bool InitInstance();
@@ -160,7 +140,5 @@ public:
 
 	virtual bool ProcessWithConnectedSocket(CCiSocket* /*socket*/) { return true; }
 };
-
-typedef CLinkedListTemplate<CNetworkThread> CNetworkThreadList;
 
 #endif // !defined(AFX_NETWORKTHREAD_H__E790ED24_8D1D_44DA_AD3D_E3E300322181__INCLUDED_)

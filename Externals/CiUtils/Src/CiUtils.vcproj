@@ -314,38 +314,6 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath=".\AuthNetworkThread.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CiConfig.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CiLogger.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CiMulticastSocket.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CiMutex.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CiQueue.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CiRealTimeThread.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CiSafeString.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\CiSemaphore.cpp"
 				>
 			</File>
@@ -355,22 +323,6 @@
 			</File>
 			<File
 				RelativePath=".\CiThread2.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CiThreadComplex.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CiThreadRealTimeComplex.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CiUtils.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\crc32.cpp"
 				>
 			</File>
 			<File
@@ -410,30 +362,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\MessageDigest.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\MessageDigestMD5.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\MessageDigestSHA1.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\MTime2.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\MTimeSpan2.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\NetIOStream.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\NetUtil.cpp"
 				>
 			</File>
@@ -441,107 +369,11 @@
 				RelativePath=".\NetworkThread.cpp"
 				>
 			</File>
-			<File
-				RelativePath=".\perfmon.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\RealTimeFlavor.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\RealTimeNetworkThread.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\StringLinkedList.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\utf8_codecvt.cpp"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug_Unicode|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release_Unicode|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\UTime.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\UTimeSpan.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl"
 			>
-			<File
-				RelativePath=".\AuthNetworkThread.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CiConfig.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CiFileIO.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CiLogger.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CiMulticastSocket.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CiMutex.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CiQueue.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CiRealTimeThread.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CiSafeString.h"
-				>
-			</File>
 			<File
 				RelativePath=".\CiSemaphore.h"
 				>
@@ -555,67 +387,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\CiThreadComplex.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CiThreadRealTimeComplex.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CiTypes.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CiUtils.h"
-				>
-			</File>
-			<File
-				RelativePath="..\Include\common_CiFileIO.h"
-				>
-			</File>
-			<File
 				RelativePath="..\Include\common_CiUtils.h"
 				>
 			</File>
 			<File
-				RelativePath=".\crc32.h"
-				>
-			</File>
-			<File
 				RelativePath=".\internal_CiUtils.h"
-				>
-			</File>
-			<File
-				RelativePath=".\LinkedListTemplate.h"
-				>
-			</File>
-			<File
-				RelativePath=".\MessageDigest.h"
-				>
-			</File>
-			<File
-				RelativePath=".\MessageDigestMD5.h"
-				>
-			</File>
-			<File
-				RelativePath=".\MessageDigestSHA1.h"
-				>
-			</File>
-			<File
-				RelativePath=".\MTime2.h"
-				>
-			</File>
-			<File
-				RelativePath=".\MTimeSpan2.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NetIOStream.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NetIOStreamInterface.h"
 				>
 			</File>
 			<File
@@ -624,42 +400,6 @@
 			</File>
 			<File
 				RelativePath=".\NetworkThread.h"
-				>
-			</File>
-			<File
-				RelativePath=".\perfmon.h"
-				>
-			</File>
-			<File
-				RelativePath=".\RealTimeFlavor.h"
-				>
-			</File>
-			<File
-				RelativePath=".\RealTimeNetworkThread.h"
-				>
-			</File>
-			<File
-				RelativePath=".\StringLinkedList.h"
-				>
-			</File>
-			<File
-				RelativePath=".\utf8_codecvt.h"
-				>
-			</File>
-			<File
-				RelativePath=".\UTime.h"
-				>
-			</File>
-			<File
-				RelativePath=".\UTimeSpan.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="Doc"
-			>
-			<File
-				RelativePath="..\Doc\ReleaseNote-CiUtils.txt"
 				>
 			</File>
 		</Filter>

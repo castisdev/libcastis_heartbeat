@@ -1,11 +1,6 @@
-// CiThread2.cpp: implementation of the CCiThread2 class.
-//
-//////////////////////////////////////////////////////////////////////
-
 #include "internal_CiUtils.h"
 
 #include "CiThread2.h"
-#include "CiLogger.h"
 
 #ifdef _WIN32
 #include <process.h>
@@ -51,13 +46,11 @@ CCiThread2::CCiThread2()
 , m_state(CI_THREAD2_READY)
 {
 	m_semExit.Initialize(1);
-	m_semLock.Initialize(1);
 }
 
 CCiThread2::~CCiThread2()
 {
 	m_semExit.Finalize();
-	m_semLock.Finalize();
 }
 
 bool CCiThread2::CreateThread()
@@ -113,28 +106,6 @@ bool CCiThread2::RunThreadHere()
 	NotifyExit();
 
 	return true;
-}
-
-bool CCiThread2::PrepareComplexing()
-{
-	return PrepareRunning();
-}
-
-bool CCiThread2::EndComplexing()
-{
-	NotifyExit();
-
-	return true;
-}
-
-bool CCiThread2::Lock()
-{
-	return m_semLock.Wait();
-}
-
-bool CCiThread2::Unlock()
-{
-	return m_semLock.Post();
 }
 
 void CCiThread2::NotifyExit()
