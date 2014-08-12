@@ -365,10 +365,6 @@
 				RelativePath=".\NetUtil.cpp"
 				>
 			</File>
-			<File
-				RelativePath=".\NetworkThread.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -396,10 +392,6 @@
 			</File>
 			<File
 				RelativePath=".\NetUtil.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NetworkThread.h"
 				>
 			</File>
 		</Filter>

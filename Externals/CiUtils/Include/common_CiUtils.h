@@ -3,7 +3,6 @@
 
 #include "../Src/CiSemaphore.h"
 #include "../Src/NetUtil.h"
-#include "../Src/NetworkThread.h"
 #include "../Src/CiSocket.h"
 #include "../Src/CiThread2.h"
 
