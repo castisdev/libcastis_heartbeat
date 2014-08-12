@@ -7,7 +7,6 @@ CCiHBResponser::CCiHBResponser(const std::string& szRepresentativeIP,
 							   unsigned short iPortNumber,
 							   const std::string& szLocalIP)
 {
-	m_pSocket = NULL;
 	m_szRepresentativeIP = szRepresentativeIP;
 	m_iPortNumber = iPortNumber;
 	m_szLocalIP = szLocalIP;
@@ -80,8 +79,6 @@ bool CCiHBResponser::InitInstance()
 		/* 실패하면 pReadSocket은 destructor의 m_ReadSockets[] 정리 루틴에서 정리된다 */
 		return false;
 	}
-
-	m_pSocket = pReadSocket;
 
 	return true;
 }

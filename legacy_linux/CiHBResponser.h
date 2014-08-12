@@ -31,7 +31,6 @@ protected:
 	void SetProcessState(CiHBState_t state);
 
 public:
-	CCiSocket *m_pSocket;
 	std::string m_szRepresentativeIP;
 	std::string m_szLocalIP;
 	unsigned short m_iPortNumber;

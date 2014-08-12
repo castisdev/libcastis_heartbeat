@@ -28,12 +28,11 @@ typedef enum {
 class CNetworkThread : public CCiThread2
 {
 public:
-	CNetworkThread();
+	CNetworkThread(int iTimeoutMillisec = 0);
 	virtual ~CNetworkThread();
 
 protected:
 	// The read sockets of this network thread
-	int m_iReadSocketCount;
 	CCiSocket** m_ReadSockets;
 
 #ifdef _WIN32
@@ -76,27 +75,21 @@ public:
 	pollfd *FindPollFD(CCiSocket *pSocket);
 #endif
 
-	/* select/poll timeout */
-	void SetTimeoutMillisec(int iTimeoutMillisec);
-
 	/* socket set management */
-	CCiSocket* FindSocket(int iSocketFD);
 	bool AddReadSocket(CCiSocket* pReadSocket);
-	bool DeleteReadSocket(CCiSocket* pReadSocket, bool bPreserve = false);
+	bool DeleteReadSocket(CCiSocket* pReadSocket);
 
 	/* disable a socket in case of internal errors */
 	bool DisableSocket(CCiSocket* pSocket);
 	virtual bool OnReadSocketError(CCiSocket* pSocket);
 
 	// implementations
-	virtual bool InitInstance();
 	virtual bool ExitInstance();
 	virtual bool Run();
 
 	// overridables
 	virtual bool WaitNetworkEvent(int *piNEvent);
 	virtual bool ProcessReadEvent();
-	virtual bool ProcessTimeout();
 
 	virtual ReceiveIntMessageResult_t ReceiveIntMessage(CCiSocket* pReadSocket, int *piReceivedMessage);
 	virtual bool OnMessage(CCiSocket* pReadSocket, int iMessage);

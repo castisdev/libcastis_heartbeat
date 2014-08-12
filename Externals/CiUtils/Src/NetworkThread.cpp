@@ -19,12 +19,11 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CNetworkThread::CNetworkThread()
+CNetworkThread::CNetworkThread(int iTimeoutMillisec/*=0*/)
 : m_ReadSockets(NULL)
+, m_iTimeoutMillisec(iTimeoutMillisec)
 , m_iMaxFDSize(NETWORK_THREAD_FD_SETSIZE)
 {
-	m_iReadSocketCount = 0;
-
 #ifdef _WIN32
 	FD_ZERO(&m_fdSetAllRead);
 	FD_ZERO(&m_fdSetRead);
@@ -55,9 +54,6 @@ CNetworkThread::CNetworkThread()
 
 	// Events Count for immediate break to save the time
 	m_iEventsCount = 0;
-
-	// select time
-	m_iTimeoutMillisec = 0;	// no wait
 }
 
 CNetworkThread::~CNetworkThread()
@@ -140,7 +136,7 @@ bool CNetworkThread::FDSetDelete(CCiSocket* pSocket)
 #else
 /* for poll */
 /* poll fd manipulation */
-bool CNetworkThread::PollFDAdd(CCiSocket *pSocket, bool bReadCase)
+bool CNetworkThread::PollFDAdd(CCiSocket *pSocket)
 {
 	if ( pSocket == NULL ) {
 		return false;
@@ -162,14 +158,7 @@ bool CNetworkThread::PollFDAdd(CCiSocket *pSocket, bool bReadCase)
 	m_PollFds[ m_iPollFdCount ].fd = iSocketFD;
 	m_PollFds[ m_iPollFdCount ].revents = 0;
 
-	if ( bReadCase == true )
-	{
-		m_PollFds[ m_iPollFdCount ].events = POLLIN | POLLRDNORM | POLLRDBAND | POLLPRI;
-	}
-	else
-	{
-		m_PollFds[ m_iPollFdCount ].events = POLLOUT | POLLWRNORM | POLLWRBAND;
-	}
+	m_PollFds[ m_iPollFdCount ].events = POLLIN | POLLRDNORM | POLLRDBAND | POLLPRI;
 
 	m_iPollFdCount++;
 
@@ -265,30 +254,6 @@ pollfd *CNetworkThread::FindPollFD(CCiSocket *pSocket)
 
 #endif
 
-/* select/poll timeout */
-void CNetworkThread::SetTimeoutMillisec(int iTimeoutMillisec)
-{
-	m_iTimeoutMillisec = iTimeoutMillisec;
-}
-
-/* socket set management */
-CCiSocket* CNetworkThread::FindSocket(int iSocketFD)
-{
-	int i = 0;
-	int iMaxFDSize = GetMaxFDSize();
-
-	for ( ; i < iMaxFDSize; i++ )
-	{
-		if ( m_ReadSockets[i] != NULL
-			&& m_ReadSockets[i]->m_iSocket == iSocketFD )
-		{
-			return m_ReadSockets[i];
-		}
-	}
-
-	return NULL;
-}
-
 bool CNetworkThread::AddReadSocket(CCiSocket* pReadSocket)
 {
 	if ( pReadSocket == NULL ) {
@@ -301,7 +266,6 @@ bool CNetworkThread::AddReadSocket(CCiSocket* pReadSocket)
 		if ( m_ReadSockets[i] == NULL )
 		{
 			m_ReadSockets[i] = pReadSocket;
-			m_iReadSocketCount++;
 			return true;
 		}
 	}
@@ -309,7 +273,7 @@ bool CNetworkThread::AddReadSocket(CCiSocket* pReadSocket)
 	return false;
 }
 
-bool CNetworkThread::DeleteReadSocket(CCiSocket* pReadSocket, bool bPreserve)
+bool CNetworkThread::DeleteReadSocket(CCiSocket* pReadSocket)
 {
 	if ( pReadSocket == NULL ) {
 		return false;
@@ -320,11 +284,8 @@ bool CNetworkThread::DeleteReadSocket(CCiSocket* pReadSocket, bool bPreserve)
 	{
 		if ( m_ReadSockets[i] == pReadSocket )
 		{
-			if ( bPreserve == false ) {
-				delete pReadSocket;
-			}
+			delete pReadSocket;
 			m_ReadSockets[i] = NULL;
-			m_iReadSocketCount--;
 			return true;
 		}
 	}
@@ -365,12 +326,6 @@ bool CNetworkThread::OnReadSocketError(CCiSocket* pSocket)
 	return true;
 }
 
-/* implementations */
-bool CNetworkThread::InitInstance()
-{
-	return CCiThread2::InitInstance();
-}
-
 bool CNetworkThread::ExitInstance()
 {
 	int iMaxFDSize = GetMaxFDSize();
@@ -383,8 +338,6 @@ bool CNetworkThread::ExitInstance()
 			m_ReadSockets[i] = NULL;
 		}
 	}
-
-	m_iReadSocketCount = 0;
 
 #ifdef _WIN32
 	FD_ZERO(&m_fdSetAllRead);
@@ -424,11 +377,6 @@ bool CNetworkThread::Run()
 		if ( !m_bExit && m_iEventsCount > 0 )
 		{
 			ProcessReadEvent();
-		}
-
-		if ( !m_bExit )
-		{
-			ProcessTimeout();
 		}
 	}
 
@@ -531,11 +479,6 @@ bool CNetworkThread::ProcessReadEvent()
 		}
 	}
 
-	return true;
-}
-
-bool CNetworkThread::ProcessTimeout()
-{
 	return true;
 }
 
