@@ -36,16 +36,10 @@ protected:
 	int m_iReadSocketCount;
 	CCiSocket** m_ReadSockets;
 
-	// The write sockets of this network thread
-	int m_iWriteSocketCount;
-	CCiSocket** m_WriteSockets;
-
 #ifdef _WIN32
 	fd_set m_fdSetAllRead;
-	fd_set m_fdSetAllWrite;
 
 	fd_set m_fdSetRead;
-	fd_set m_fdSetWrite;
 
 	int m_iMaximumSocket;
 #else
@@ -61,11 +55,6 @@ protected:
 	// select time
 	int	m_iTimeoutMillisec;
 
-	int m_iConnectedSocketSendBufferSize;
-	int m_iConnectedSocketRecvBufferSize;
-
-	int m_iListenQueueSize;
-
 private:
 	const int m_iMaxFDSize;
 
@@ -75,15 +64,15 @@ public:
 #ifdef _WIN32
 	/* for select */
 	/* fd set manipulation */
-	bool FDSetAdd(CCiSocket* pSocket, bool bReadCase = true);
-	bool FDSetDelete(CCiSocket* pSocket, bool bReadCase = true);
+	bool FDSetAdd(CCiSocket* pSocket);
+	bool FDSetDelete(CCiSocket* pSocket);
 #else
 	/* for poll */
 	/* poll fd manipulation */
-	bool PollFDAdd(CCiSocket *pSocket, bool bReadCase = true);
+	bool PollFDAdd(CCiSocket *pSocket);
 	bool PollFDDelete(CCiSocket *pSocket);
-	bool PollFDEnable(pollfd *pPollFD, bool bReadCase = true);
-	bool PollFDDisable(pollfd *pPollFD, bool bReadCase = true);
+	bool PollFDEnable(pollfd *pPollFD);
+	bool PollFDDisable(pollfd *pPollFD);
 	pollfd *FindPollFD(CCiSocket *pSocket);
 #endif
 
@@ -91,11 +80,9 @@ public:
 	void SetTimeoutMillisec(int iTimeoutMillisec);
 
 	/* socket set management */
-	CCiSocket* FindSocket(int iSocketFD, bool bReadCase = true);
+	CCiSocket* FindSocket(int iSocketFD);
 	bool AddReadSocket(CCiSocket* pReadSocket);
 	bool DeleteReadSocket(CCiSocket* pReadSocket, bool bPreserve = false);
-	bool AddWriteSocket(CCiSocket* pWriteSocket);
-	bool DeleteWriteSocket(CCiSocket* pWriteSocket, bool bPreserve = false);
 
 	/* disable a socket in case of internal errors */
 	bool DisableSocket(CCiSocket* pSocket);
@@ -109,14 +96,10 @@ public:
 	// overridables
 	virtual bool WaitNetworkEvent(int *piNEvent);
 	virtual bool ProcessReadEvent();
-	virtual bool ProcessWriteEvent();
 	virtual bool ProcessTimeout();
 
 	virtual ReceiveIntMessageResult_t ReceiveIntMessage(CCiSocket* pReadSocket, int *piReceivedMessage);
 	virtual bool OnMessage(CCiSocket* pReadSocket, int iMessage);
-	virtual bool DoWrite(CCiSocket* pWriteSocket);
-
-	virtual bool ProcessWithConnectedSocket(CCiSocket* /*socket*/) { return true; }
 };
 
 #endif // !defined(AFX_NETWORKTHREAD_H__E790ED24_8D1D_44DA_AD3D_E3E300322181__INCLUDED_)
