@@ -19,22 +19,13 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CNetworkThread::CNetworkThread(int iListenPortNumber
-							   , int iConnectedSocketSendBufferSize/*=CI_SOCKET_SEND_BUFFER_SIZE*/
-							   , int iConnectedSocketRecvBufferSize/*=CI_SOCKET_RECV_BUFFER_SIZE*/
-							   , int iListenQueueSize/*= NETWORK_THREAD_LISTEN_QUEUE_DEFAULTSIZE*/
-							   , std::string listenIPAddr
-							   , int iMaxFDSize)
-: m_ListenIPAddr(listenIPAddr)
-, m_ReadSockets(NULL)
-, m_iMaxFDSize(iMaxFDSize)
+CNetworkThread::CNetworkThread()
+: m_ReadSockets(NULL)
+, m_iConnectedSocketSendBufferSize(CI_SOCKET_SEND_BUFFER_SIZE)
+, m_iConnectedSocketRecvBufferSize(CI_SOCKET_RECV_BUFFER_SIZE)
+, m_iListenQueueSize(NETWORK_THREAD_LISTEN_QUEUE_DEFAULTSIZE)
+, m_iMaxFDSize(NETWORK_THREAD_FD_SETSIZE)
 {
-	// TCP listen port number
-	m_iListenPortNumber = iListenPortNumber;
-
-	// TCP listen socket
-	m_pListenSocket = NULL;
-
 	m_iReadSocketCount = 0;
 	m_iWriteSocketCount = 0;
 
@@ -77,11 +68,6 @@ CNetworkThread::CNetworkThread(int iListenPortNumber
 
 	// select time
 	m_iTimeoutMillisec = 0;	// no wait
-
-	SetConnectedSocketSendBufferSize(iConnectedSocketSendBufferSize);
-	SetConnectedSocketRecvBufferSize(iConnectedSocketRecvBufferSize);
-
-	m_iListenQueueSize = iListenQueueSize;
 }
 
 CNetworkThread::~CNetworkThread()
@@ -101,13 +87,6 @@ CNetworkThread::~CNetworkThread()
 	}
 	delete[] m_ReadSockets;
 	delete[] m_WriteSockets;
-
-	if ( m_pListenSocket != NULL )
-	{
-		m_pListenSocket->Disconnect();
-		delete m_pListenSocket;
-		m_pListenSocket = NULL;
-	}
 
 #ifndef _WIN32
 	for (int i=0; i<iMaxFDSize; i++)
@@ -482,56 +461,7 @@ bool CNetworkThread::OnReadSocketError(CCiSocket* pSocket)
 /* implementations */
 bool CNetworkThread::InitInstance()
 {
-   	// initialize thread
-	if ( CCiThread2::InitInstance() != true )
-	{
-		return false;
-	}
-
-	if ( m_iListenPortNumber == NU_INVALID_PORT_NUMBER )
-	{
-		/* this network thread will not have a listen port */
-		/* it will have read/write sockets. */
-		/* for example, CNetworkPumper of VOD server */
-		return true;
-	}
-
-	int iListenSocket = 0;
-
-    // tcp socket listen
-	// by gun 2004.5.23 대기큐 10 -> 20
-	// by nuri 2004.05.24 대기큐 20 -> 10 으로 원상복귀
-	// 설정 가능하도록 수정 default는 10개
-    if ( nu_create_listen_socket(&iListenSocket, static_cast<unsigned short>(m_iListenPortNumber), m_iListenQueueSize, m_ListenIPAddr.c_str()) == false )
-	{
-		return false;
-    }
-
-	if ( m_iListenPortNumber == 0 )
-	{
-		unsigned short usListenPortNumber;
-		if ( nu_get_local_port_number(iListenSocket, &usListenPortNumber) == false )
-		{
-			close(iListenSocket);	/* 2004.08.10 NURI */
-			return false;
-		}
-
-		m_iListenPortNumber = (int)usListenPortNumber;
-	}
-
-	// nonblocking 설정은 아래 생성자에서...
-	m_pListenSocket = new CCiSocket( iListenSocket );
-
-#ifdef _WIN32
-	if ( FDSetAdd( m_pListenSocket ) == false )
-#else
-	if ( PollFDAdd( m_pListenSocket ) == false )
-#endif
-	{
-		return false;
-	}
-
-	return true;
+	return CCiThread2::InitInstance();
 }
 
 bool CNetworkThread::ExitInstance()
@@ -547,13 +477,6 @@ bool CNetworkThread::ExitInstance()
 		}
 
 		m_WriteSockets[i] = NULL;
-	}
-
-	if ( m_pListenSocket != NULL )
-	{
-		m_pListenSocket->Disconnect();
-		delete m_pListenSocket;
-		m_pListenSocket = NULL;
 	}
 
 	m_iReadSocketCount = 0;
@@ -596,32 +519,6 @@ bool CNetworkThread::Run()
 	/* m_fdSetRead, m_fdSetWrite */
 	if ( !m_bExit && WaitNetworkEvent(&m_iEventsCount) == true )
 	{
-		if ( !m_bExit && m_iEventsCount > 0 )
-		{
-			/* look in the listen socket first */
-#ifdef _WIN32
-			if ( m_pListenSocket != NULL && FD_ISSET(m_pListenSocket->m_iSocket, &m_fdSetRead) )
-			{
-				ProcessConnection(NULL);
-			}
-#else
-			//if ( m_pListenSocket != NULL && ( m_PollFds[0].revents & POLLRDNORM )) {	/* substituted by followings */
-
-			if ( m_pListenSocket != NULL )
-			{
-				pollfd *pListenPollfd = FindPollFD( m_pListenSocket );
-				if ( pListenPollfd == NULL )
-				{
-					return false;
-				}
-				if ( pListenPollfd->revents & POLLRDNORM )
-				{
-					ProcessConnection(NULL);
-				}
-			}
-#endif
-		}
-
 		if ( !m_bExit && m_iEventsCount > 0 )
 		{
 			ProcessReadEvent();
@@ -677,114 +574,6 @@ bool CNetworkThread::WaitNetworkEvent(int *piNEvent)
 	if ( piNEvent != NULL )
 	{
 		*piNEvent = iNEvent;
-	}
-
-	return true;
-}
-
-bool CNetworkThread::ProcessConnection(CCiSocket **ppConnectedSocket)
-{
-    int iNewSocket;
-	char szClientIP[CI_MAX_IP_ADDRESS_LENGTH+1];
-
-	/* accept the connect request */
-	if ( nu_accept(m_pListenSocket->m_iSocket, &iNewSocket, szClientIP, NULL) == false )
-	{
-		/* added by nuri. 2003.09.15 */
-		/* handle non-blocking socket's accept */
-
-		int iError = m_pListenSocket->GetLastError();
-		if ( iError != CI_EWOULDBLOCK )
-		{
-			//fprintf(stdout, "CNetworkThread: ProcessConnection -> accept ERROR ( %s ) !!\n", strerror(errno));
-		}
-
-		/* decrement the event count by one */
-		m_iEventsCount--;
-
-#ifndef _WIN32
-		/* ListenSocket's revents clear */
-		pollfd *pListenPollfd = FindPollFD( m_pListenSocket );
-		if ( pListenPollfd != NULL ) {
-			pListenPollfd->revents = 0;		// CLEAR;
-		}
-#endif
-
-		return false;
-	}
-
-	/* now, accepted */
-
-	/* decrement the event count by one */
-	m_iEventsCount--;
-
-#ifndef _WIN32
-	/* ListenSocket's revents clear */
-
-	pollfd *pListenPollfd = FindPollFD( m_pListenSocket );
-	if ( pListenPollfd != NULL )
-	{
-		pListenPollfd->revents = 0;		// CLEAR;
-	}
-#endif
-
-	/* go beyond the limit */
-	if ( m_iReadSocketCount >= GetMaxFDSize() )
-	{
-		nu_disconnect(iNewSocket);
-		return false;
-	}
-
-	CCiSocket* pReadSocket = new CCiSocket( iNewSocket, CI_SOCKET_TCP, GetConnectedSocketSendBufferSize(), GetConnectedSocketRecvBufferSize() );
-
-	if ( !ProcessWithConnectedSocket(pReadSocket) )
-	{
-		delete pReadSocket;
-
-		if ( ppConnectedSocket != NULL )
-			*ppConnectedSocket = NULL;
-
-		return false;
-	}
-
-	if ( pReadSocket == NULL
-		|| AddReadSocket(pReadSocket) == false )
-	{
-		if ( pReadSocket != NULL ) {
-			delete pReadSocket;
-		}
-
-		/* set the implicit return value */
-		if ( ppConnectedSocket != NULL )
-		{
-			*ppConnectedSocket = NULL;
-		}
-
-		return false;
-	}
-
-	/* success */
-#ifdef _WIN32
-	if ( FDSetAdd( pReadSocket ) == false )
-#else
-	if ( PollFDAdd( pReadSocket ) == false )
-#endif
-	{
-		DeleteReadSocket( pReadSocket );
-
-		/* set the implicit return value */
-		if ( ppConnectedSocket != NULL )
-		{
-			*ppConnectedSocket = NULL;
-		}
-
-		return false;
-	}
-
-	/* set the implicit return value */
-	if ( ppConnectedSocket != NULL )
-	{
-		*ppConnectedSocket = pReadSocket;
 	}
 
 	return true;

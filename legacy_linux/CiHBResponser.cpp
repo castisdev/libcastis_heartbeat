@@ -6,7 +6,6 @@
 CCiHBResponser::CCiHBResponser(const std::string& szRepresentativeIP,
 							   unsigned short iPortNumber,
 							   const std::string& szLocalIP)
-: CNetworkThread(NU_INVALID_PORT_NUMBER)
 {
 	m_pSocket = NULL;
 	m_szRepresentativeIP = szRepresentativeIP;

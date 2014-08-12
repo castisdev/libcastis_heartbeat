@@ -28,25 +28,10 @@ typedef enum {
 class CNetworkThread : public CCiThread2
 {
 public:
-	CNetworkThread(int iListenPortNumber
-		, int iConnectedSocketSendBufferSize = CI_SOCKET_SEND_BUFFER_SIZE
-		, int iConnectedSocketRecvBufferSize = CI_SOCKET_RECV_BUFFER_SIZE
-		, int iListenQueueSize = NETWORK_THREAD_LISTEN_QUEUE_DEFAULTSIZE
-		, std::string listenIPAddr = "0.0.0.0"
-		, int iMaxFDSize = NETWORK_THREAD_FD_SETSIZE);
-
+	CNetworkThread();
 	virtual ~CNetworkThread();
 
 protected:
-	// TCP listen port number
-	int m_iListenPortNumber;
-	std::string m_ListenIPAddr;
-
-	// TCP listen socket
-	/* The listen socket will be created in InitInstance(), */
-	/* and destroyed in Destructor() */
-	CCiSocket* m_pListenSocket;
-
 	// The read sockets of this network thread
 	int m_iReadSocketCount;
 	CCiSocket** m_ReadSockets;
@@ -87,12 +72,6 @@ private:
 public:
 	int GetMaxFDSize() const { return m_iMaxFDSize; }
 
-	int GetConnectedSocketSendBufferSize() const { return m_iConnectedSocketSendBufferSize; }
-	int GetConnectedSocketRecvBufferSize() const { return m_iConnectedSocketRecvBufferSize; }
-
-	void SetConnectedSocketSendBufferSize(int val) { m_iConnectedSocketSendBufferSize = val; }
-	void SetConnectedSocketRecvBufferSize(int val) { m_iConnectedSocketRecvBufferSize = val; }
-
 #ifdef _WIN32
 	/* for select */
 	/* fd set manipulation */
@@ -129,7 +108,6 @@ public:
 
 	// overridables
 	virtual bool WaitNetworkEvent(int *piNEvent);
-    virtual bool ProcessConnection(CCiSocket **ppConnectedSocket);
 	virtual bool ProcessReadEvent();
 	virtual bool ProcessWriteEvent();
 	virtual bool ProcessTimeout();
