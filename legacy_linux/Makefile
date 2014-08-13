@@ -13,14 +13,12 @@ endif
 CFLAGS+=-D_BARBADOS_=1 -Wall -D_REENTRANT -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -g -Os
 CFLAGS+=-D_TIME_CHECK
 
-INCLUDEDIR+=-I../Externals/CiUtils/Include
-INCLUDEDIR+=-I../Externals/CiUtils/Externals/Include
 LIBDIR+=
 
 CFLAGS+=$(CDEBUG) $(INCLUDEDIR)
 LDFLAGS+=$(LDEBUG) $(LIBDIR)
 
-OBJS = CiHBRequester.o CiHBResponser.o CiHBAddress.o CiHBAddressList.o
+OBJS = CiHBResponser.o legacy_support.o
 
 ifeq ($(KERNELTYPE), 32)
 	LIB = libCiHB.a
