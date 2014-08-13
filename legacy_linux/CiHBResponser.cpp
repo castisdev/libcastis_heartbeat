@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "CiHBResponser.h"
 
+#include <algorithm>
 #include <boost/scoped_array.hpp>
 #include "CiSockError.h"
 
@@ -8,8 +9,7 @@ CCiHBResponser::CCiHBResponser(const std::string& szRepresentativeIP,
 							   unsigned short iPortNumber,
 							   const std::string& szLocalIP,
 							   int iTimeoutMillisec/*=0*/)
-: m_ReadSockets(NULL)
-, m_iTimeoutMillisec(iTimeoutMillisec)
+: m_iTimeoutMillisec(iTimeoutMillisec)
 , m_iMaxFDSize(NETWORK_THREAD_FD_SETSIZE)
 {
 	//////////////////////////////////////////////////////////////////////////
@@ -21,23 +21,13 @@ CCiHBResponser::CCiHBResponser(const std::string& szRepresentativeIP,
 	m_iMaximumSocket = NU_INVALID_SOCKET;
 #endif
 
-	m_ReadSockets = new CCiSocket*[m_iMaxFDSize];
-
-	for ( int i = 0; i < m_iMaxFDSize; i++ )
-	{
-		m_ReadSockets[i] = NULL;
-	}
-
 #ifndef _WIN32
 	m_PollFds = new pollfd[m_iMaxFDSize];
-	m_PollSockets = new CCiSocket*[m_iMaxFDSize];
 	for ( int i = 0; i < m_iMaxFDSize; i++ )
 	{
 		m_PollFds[i].fd = NU_INVALID_SOCKET;
 		m_PollFds[i].events = 0;
 		m_PollFds[i].revents = 0;
-
-		m_PollSockets[i] = NULL;
 	}
 
 	m_iPollFdCount = 0;
@@ -63,29 +53,9 @@ CCiHBResponser::~CCiHBResponser()
 	//////////////////////////////////////////////////////////////////////////
 	// from network thread
 	//
-	int iMaxFDSize = GetMaxFDSize();
-	for ( int i = 0; i < iMaxFDSize ; i++ )
-	{
-		if ( m_ReadSockets[i] != NULL )
-		{
-			m_ReadSockets[i]->Disconnect();
-			delete m_ReadSockets[i];
-			m_ReadSockets[i] = NULL;
-		}
-	}
-	delete[] m_ReadSockets;
+	std::for_each(m_ReadSockets.begin(), m_ReadSockets.end(), &nu_disconnect);
 
 #ifndef _WIN32
-	for (int i=0; i<iMaxFDSize; i++)
-	{
-		if( m_PollSockets[i] != NULL)
-		{
-			delete m_PollSockets[i];
-			m_PollSockets[i] = NULL;
-		}
-	}
-
-	delete[] m_PollSockets;	
 	delete[] m_PollFds;
 #endif
 }
@@ -114,37 +84,17 @@ bool CCiHBResponser::InitInstance()
 		return false;
 	}
 
-	/* create CCiSocket */
-	/* CiSocket의 send buffer size와 recv buffer size는 각각 1KB. 실제 사용하지는 않는다. */
-	CCiSocket *pReadSocket = new CCiSocket(sockfd, CI_SOCKET_UDP, 1024, 1024);
-	if ( pReadSocket == NULL )
-	{
-#ifdef _WIN32
-		if ( closesocket(sockfd) != 0 )
-#else
-		if ( close(sockfd) < 0 )
-#endif
-		{
-			// do nothing
-		}
-
-		return false;
-	}
-
 	/* add to ReadSocketArray */
-	if ( AddReadSocket(pReadSocket) == false )
+	if ( AddReadSocket(sockfd) == false )
 	{
-		pReadSocket->Disconnect();
-		delete pReadSocket;
-		pReadSocket = NULL;
-
+		nu_disconnect(sockfd);
 		return false;
 	}
 
 #ifdef _WIN32
-	if ( FDSetAdd( pReadSocket ) == false )
+	if ( FDSetAdd( sockfd ) == false )
 #else
-	if ( PollFDAdd( pReadSocket ) == false )
+	if ( PollFDAdd( sockfd ) == false )
 #endif
 	{
 		/* 실패하면 pReadSocket은 destructor의 m_ReadSockets[] 정리 루틴에서 정리된다 */
@@ -154,14 +104,14 @@ bool CCiHBResponser::InitInstance()
 	return true;
 }
 
-bool CCiHBResponser::OnReadSocketError(CCiSocket* /*pSocket*/)
+bool CCiHBResponser::OnReadSocketError(int /*sockfd*/)
 {
 	/* connected TCP socket 이 아니므로
 	 * socket을 정리하지 않는다. */
 	return true;
 }
 
-bool CCiHBResponser::OnHeartbeatRequest(CCiSocket *pReadSocket)
+bool CCiHBResponser::OnHeartbeatRequest(int sockfd)
 {
 	/* request format : seq_num */
 	/* parse request */
@@ -173,10 +123,10 @@ bool CCiHBResponser::OnHeartbeatRequest(CCiSocket *pReadSocket)
 	int iSeqNum = ntohl(iTemp);
 	p = p + 4;
 
-	return SendHeartbeatResponse(pReadSocket, iSeqNum);
+	return SendHeartbeatResponse(sockfd, iSeqNum);
 }
 
-bool CCiHBResponser::SendHeartbeatResponse(CCiSocket *pReadSocket, int iSeqNum)
+bool CCiHBResponser::SendHeartbeatResponse(int sockfd, int iSeqNum)
 {
 	/* response format :
 	 * msg_type + seq_num + representative ip length + representative ip + state + local ip length + local ip */
@@ -215,7 +165,7 @@ bool CCiHBResponser::SendHeartbeatResponse(CCiSocket *pReadSocket, int iSeqNum)
 
 	/* send response */
 
-	int	nSend = sendto(pReadSocket->m_iSocket, pMsgStr.get(), iMsgStrSize, 0, &m_saRecv, sizeof(m_saRecv));
+	int	nSend = sendto(sockfd, pMsgStr.get(), iMsgStrSize, 0, &m_saRecv, sizeof(m_saRecv));
 	if ( nSend < 0 )
 	{
 		return false;
@@ -255,9 +205,9 @@ void CCiHBResponser::SetProcessAlive()
 	SetProcessState(CIHB_STATE_ALIVE);
 }
 
-ReceiveIntMessageResult_t CCiHBResponser::ReceiveIntMessage(CCiSocket *pReadSocket, int *piReceivedMessage)
+ReceiveIntMessageResult_t CCiHBResponser::ReceiveIntMessage(int sockfd, int *piReceivedMessage)
 {
-	if ( pReadSocket == NULL || piReceivedMessage == NULL )
+	if ( sockfd == NU_INVALID_SOCKET || piReceivedMessage == NULL )
 	{
 		return RECEIVE_INT_MESSAGE_FALSE;
 	}
@@ -268,7 +218,7 @@ ReceiveIntMessageResult_t CCiHBResponser::ReceiveIntMessage(CCiSocket *pReadSock
 	socklen_t saRecvLen = sizeof(m_saRecv);
 #endif
 
-	int nRead = recvfrom(pReadSocket->m_iSocket, m_szRecvBuf, 8, 0, &m_saRecv, &saRecvLen);
+	int nRead = recvfrom(sockfd, m_szRecvBuf, 8, 0, &m_saRecv, &saRecvLen);
 	if ( nRead < 0 )
 	{
 		return RECEIVE_INT_MESSAGE_FALSE;
@@ -289,15 +239,15 @@ ReceiveIntMessageResult_t CCiHBResponser::ReceiveIntMessage(CCiSocket *pReadSock
 	return RECEIVE_INT_MESSAGE_TRUE;
 }
 
-bool CCiHBResponser::OnMessage(CCiSocket *pReadSocket, int iMessage)
+bool CCiHBResponser::OnMessage(int sockfd, int iMessage)
 {
-	if ( pReadSocket == NULL )
+	if ( sockfd == NU_INVALID_SOCKET )
 		return false;
 
 	switch ( iMessage )
 	{
 	case CIHB_HEARTBEAT_REQUEST:
-		OnHeartbeatRequest(pReadSocket);
+		OnHeartbeatRequest(sockfd);
 		break;
 
 	default:
@@ -315,46 +265,34 @@ bool CCiHBResponser::OnMessage(CCiSocket *pReadSocket, int iMessage)
 #ifdef _WIN32
 /* for select */
 /* fd set manipulation */
-bool CCiHBResponser::FDSetAdd(CCiSocket* pSocket)
+bool CCiHBResponser::FDSetAdd(int sockfd)
 {
-	if ( pSocket == NULL ) {
+	if ( sockfd == NU_INVALID_SOCKET ) {
 		return false;
 	}
 
-	int iSocketFD = pSocket->m_iSocket;
+	FD_SET((unsigned int)sockfd, &m_fdSetAllRead);
 
-	if ( iSocketFD == NU_INVALID_SOCKET ) {
-		return false;
-	}
-
-	FD_SET(iSocketFD, &m_fdSetAllRead);
-
-	if ( m_iMaximumSocket < iSocketFD ) {
-		m_iMaximumSocket = iSocketFD;
+	if ( m_iMaximumSocket < sockfd ) {
+		m_iMaximumSocket = sockfd;
 	}
 
 	return true;
 }
 
-bool CCiHBResponser::FDSetDelete(CCiSocket* pSocket)
+bool CCiHBResponser::FDSetDelete(int sockfd)
 {
-	if ( pSocket == NULL ) {
+	if ( sockfd == NU_INVALID_SOCKET ) {
 		return false;
 	}
 
-	int iSocketFD = pSocket->m_iSocket;
+	FD_CLR((unsigned int)sockfd, &m_fdSetAllRead);
 
-	if ( iSocketFD == NU_INVALID_SOCKET ) {
-		return false;
-	}
-
-	FD_CLR((unsigned int)iSocketFD, &m_fdSetAllRead);
-
-	if ( m_iMaximumSocket <= iSocketFD ) {
+	if ( m_iMaximumSocket <= sockfd ) {
 		/* I gave up finding the exact m_iMaximumSocket because it needs */
 		/* a linear search. */
 		/* I set m_iMaximumSocket to an approximate value instead */
-		m_iMaximumSocket = iSocketFD - 1;
+		m_iMaximumSocket = sockfd - 1;
 	}
 
 	return true;
@@ -363,15 +301,9 @@ bool CCiHBResponser::FDSetDelete(CCiSocket* pSocket)
 #else
 /* for poll */
 /* poll fd manipulation */
-bool CCiHBResponser::PollFDAdd(CCiSocket *pSocket)
+bool CCiHBResponser::PollFDAdd(int sockfd)
 {
-	if ( pSocket == NULL ) {
-		return false;
-	}
-
-	int iSocketFD = pSocket->m_iSocket;
-
-	if ( iSocketFD == NU_INVALID_SOCKET ) {
+	if ( sockfd == NU_INVALID_SOCKET ) {
 		return false;
 	}
 
@@ -380,9 +312,7 @@ bool CCiHBResponser::PollFDAdd(CCiSocket *pSocket)
 		return false;
 	}
 
-	m_PollSockets[ m_iPollFdCount ] = pSocket;
-
-	m_PollFds[ m_iPollFdCount ].fd = iSocketFD;
+	m_PollFds[ m_iPollFdCount ].fd = sockfd;
 	m_PollFds[ m_iPollFdCount ].revents = 0;
 
 	m_PollFds[ m_iPollFdCount ].events = POLLIN | POLLRDNORM | POLLRDBAND | POLLPRI;
@@ -392,38 +322,27 @@ bool CCiHBResponser::PollFDAdd(CCiSocket *pSocket)
 	return true;
 }
 
-bool CCiHBResponser::PollFDDelete(CCiSocket *pSocket)
+bool CCiHBResponser::PollFDDelete(int sockfd)
 {
-	if ( pSocket == NULL ) {
-		return false;
-	}
-
-	int iSocketFD = pSocket->m_iSocket;
-
-	if ( iSocketFD == NU_INVALID_SOCKET ) {
+	if ( sockfd == NU_INVALID_SOCKET ) {
 		return false;
 	}
 
 	// for poll
 	for ( int i = 0; i < m_iPollFdCount; i++ )
 	{
-		if ( m_PollFds[i].fd == iSocketFD )
+		if ( m_PollFds[i].fd == sockfd )
 		{
 			if ( i !=  ( m_iPollFdCount - 1 ) )
 			{
 				m_PollFds[ i ].fd = m_PollFds[ m_iPollFdCount - 1 ].fd;
 				m_PollFds[ i ].events = m_PollFds[ m_iPollFdCount - 1 ].events;
 				m_PollFds[ i ].revents = m_PollFds[ m_iPollFdCount - 1 ].revents;
-
-				/* 2003.08.22. added by nuri */
-				m_PollSockets[ i ] = m_PollSockets[ m_iPollFdCount - 1 ];
 			}
 
 			m_PollFds[ m_iPollFdCount - 1 ].fd = NU_INVALID_SOCKET;
 			m_PollFds[ m_iPollFdCount - 1 ].events = 0;
 			m_PollFds[ m_iPollFdCount - 1 ].revents = 0;
-
-			m_PollSockets[ m_iPollFdCount - 1 ] = NULL;
 
 			m_iPollFdCount --;
 
@@ -464,95 +383,32 @@ bool CCiHBResponser::PollFDDisable(pollfd *pPollFD)
 	return true;
 }
 
-pollfd *CCiHBResponser::FindPollFD(CCiSocket *pSocket)
-{
-	if ( pSocket == NULL || pSocket->m_iSocket == NU_INVALID_SOCKET ) {
-		return NULL;
-	}
-
-	for ( int i = 0; i < m_iPollFdCount; i++ ) {
-		if ( m_PollFds[i].fd == pSocket->m_iSocket ) {
-			return &m_PollFds[i];
-		}
-	}
-
-	return NULL;
-}
-
 #endif
 
-bool CCiHBResponser::AddReadSocket(CCiSocket* pReadSocket)
+bool CCiHBResponser::AddReadSocket(int sockfd)
 {
-	if ( pReadSocket == NULL ) {
+	if ( sockfd == NU_INVALID_SOCKET ) {
 		return false;
 	}
 
-	int iMaxFDSize = GetMaxFDSize();
-	for ( int i = 0; i < iMaxFDSize; i++ )
-	{
-		if ( m_ReadSockets[i] == NULL )
-		{
-			m_ReadSockets[i] = pReadSocket;
-			return true;
-		}
-	}
-
+	m_ReadSockets.insert(sockfd);
 	return false;
 }
 
-bool CCiHBResponser::DeleteReadSocket(CCiSocket* pReadSocket)
+bool CCiHBResponser::DeleteReadSocket(int sockfd)
 {
-	if ( pReadSocket == NULL ) {
+	if ( sockfd == NU_INVALID_SOCKET ) {
 		return false;
 	}
 
-	int iMaxFDSize = GetMaxFDSize();
-	for ( int i = 0; i < iMaxFDSize; i++ )
-	{
-		if ( m_ReadSockets[i] == pReadSocket )
-		{
-			delete pReadSocket;
-			m_ReadSockets[i] = NULL;
-			return true;
-		}
-	}
-
+	m_ReadSockets.erase(sockfd);
 	return false;
-}
-
-/* disable a socket in case of internal errors */
-bool CCiHBResponser::DisableSocket(CCiSocket* pSocket)
-{
-	/* Disabling a socket means that it will be delete from fd set */
-	/* and disconnected buf is not be deleted from the socket set */
-
-	if ( pSocket == NULL ) {
-		return false;
-	}
-
-#ifdef _WIN32
-	FDSetDelete(pSocket);	/* from read socket array */
-#else
-	PollFDDelete(pSocket);
-#endif
-
-	pSocket->Disconnect();
-
-	return true;
 }
 
 bool CCiHBResponser::ExitInstance()
 {
-	int iMaxFDSize = GetMaxFDSize();
-	for ( int i = 0; i < iMaxFDSize ; i++ )
-	{
-		if ( m_ReadSockets[i] != NULL )
-		{
-			m_ReadSockets[i]->Disconnect();
-			delete m_ReadSockets[i];
-			m_ReadSockets[i] = NULL;
-		}
-	}
+	std::for_each(m_ReadSockets.begin(), m_ReadSockets.end(), &nu_disconnect);
+	m_ReadSockets.clear();
 
 #ifdef _WIN32
 	FD_ZERO(&m_fdSetAllRead);
@@ -564,13 +420,11 @@ bool CCiHBResponser::ExitInstance()
 
 
 #ifndef _WIN32
-	for ( int i = 0; i < iMaxFDSize ; i++ )
+	for ( int i = 0; i < GetMaxFDSize() ; i++ )
 	{
 		m_PollFds[i].fd = NU_INVALID_SOCKET;
 		m_PollFds[i].events = 0;
 		m_PollFds[i].revents = 0;
-
-		m_PollSockets[i] = NULL;
 	}
 
 	m_iPollFdCount = 0;
@@ -640,47 +494,22 @@ bool CCiHBResponser::WaitNetworkEvent(int *piNEvent)
 bool CCiHBResponser::ProcessReadEvent()
 {
 #ifdef _WIN32
-	int iMaxFDSize = GetMaxFDSize();
-	for ( int i = 0; i < iMaxFDSize; i++ )
+	for (std::set<int>::const_iterator i = m_ReadSockets.begin(); i != m_ReadSockets.end(); ++i)
 	{
-		if ( m_ReadSockets[i] != NULL
-			&& m_ReadSockets[i]->m_iSocket != NU_INVALID_SOCKET
-			&& FD_ISSET(m_ReadSockets[i]->m_iSocket, &m_fdSetRead) )
+		if ( *i != NU_INVALID_SOCKET && FD_ISSET(*i, &m_fdSetRead) )
 		{
-			CCiSocket* pSocket = m_ReadSockets[i];
-#else
-	for ( int i = 0; i < m_iPollFdCount; i++ )
-	{
-		if ( m_PollFds[i].fd != NU_INVALID_SOCKET
-			&& ( m_PollFds[i].revents & ( POLLIN | POLLRDNORM | POLLRDBAND | POLLPRI )))
-		{
-			m_PollFds[i].revents = 0;	// CLEAR;
-
-			CCiSocket* pSocket = m_PollSockets[i];
-#endif
-
-			int iMessage;
-			ReceiveIntMessageResult_t rimResult = ReceiveIntMessage(pSocket, &iMessage);
+			int iMessage = 0;
+			ReceiveIntMessageResult_t rimResult = ReceiveIntMessage(*i, &iMessage);
 			if ( rimResult == RECEIVE_INT_MESSAGE_TRUE )
 			{
-				if ( OnMessage(pSocket, iMessage) == false )
+				if ( OnMessage(*i, iMessage) == false )
 				{
-#ifdef _WIN32
-					if ( m_ReadSockets[i] != NULL && m_ReadSockets[i] == pSocket )
-#else
-					if ( m_PollSockets[i] != NULL && m_PollSockets[i] == pSocket )
-#endif
-						OnReadSocketError(pSocket);
+					OnReadSocketError(*i);
 				}
 			}
 			else if ( rimResult == RECEIVE_INT_MESSAGE_FALSE )
 			{
-#ifdef _WIN32
-				if ( m_ReadSockets[i] != NULL && m_ReadSockets[i] == pSocket )
-#else
-				if ( m_PollSockets[i] != NULL && m_PollSockets[i] == pSocket )
-#endif
-					OnReadSocketError(pSocket);
+				OnReadSocketError(*i);
 			}
 			else {	/* rimResult == RECEIVE_INT_MESSAGE_INTERIM */
 				/* interim message */
@@ -693,6 +522,39 @@ bool CCiHBResponser::ProcessReadEvent()
 			}
 		}
 	}
+#else
+	for ( int i = 0; i < m_iPollFdCount; i++ )
+	{
+		if ( m_PollFds[i].fd != NU_INVALID_SOCKET
+			&& ( m_PollFds[i].revents & ( POLLIN | POLLRDNORM | POLLRDBAND | POLLPRI )))
+		{
+			m_PollFds[i].revents = 0;	// CLEAR;
+
+			int iMessage = 0;
+			ReceiveIntMessageResult_t rimResult = ReceiveIntMessage(m_PollFds[i].fd, &iMessage);
+			if ( rimResult == RECEIVE_INT_MESSAGE_TRUE )
+			{
+				if ( OnMessage(m_PollFds[i].fd, iMessage) == false )
+				{
+					OnReadSocketError(m_PollFds[i].fd);
+				}
+			}
+			else if ( rimResult == RECEIVE_INT_MESSAGE_FALSE )
+			{
+				OnReadSocketError(m_PollFds[i].fd);
+			}
+			else {	/* rimResult == RECEIVE_INT_MESSAGE_INTERIM */
+				/* interim message */
+				/* do nothing just go ahead */
+			}
+
+			if ( --m_iEventsCount <= 0 )
+			{
+				break;
+			}
+		}
+	}
+#endif
 
 	return true;
 }

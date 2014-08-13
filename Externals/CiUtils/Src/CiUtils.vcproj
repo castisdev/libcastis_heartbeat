@@ -318,10 +318,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\CiSocket.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\CiThread2.cpp"
 				>
 			</File>
@@ -372,10 +368,6 @@
 			>
 			<File
 				RelativePath=".\CiSemaphore.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CiSocket.h"
 				>
 			</File>
 			<File
