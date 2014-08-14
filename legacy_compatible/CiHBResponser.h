@@ -5,6 +5,10 @@
 #include "legacy_support.h"
 #include "CiHBDefines.h"
 
+#ifdef _WIN32
+#pragma warning(push)
+#pragma warning(disable : 4512)
+#endif
 class CCiHBResponser : public cihb::CNetworkThread
 {
 public:
@@ -42,3 +46,6 @@ protected:
 	struct sockaddr m_saRecv;				/* address of request machine */
 	char m_szRecvBuf[CIHB_MAX_DATA_SIZE];
 };
+#ifdef _WIN32
+#pragma warning(pop)
+#endif

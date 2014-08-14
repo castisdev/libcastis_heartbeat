@@ -579,7 +579,7 @@ namespace cihb
 		}
 
 		m_ReadSockets.insert(sockfd);
-		return false;
+		return true;
 	}
 
 	bool CNetworkThread::DeleteReadSocket(int sockfd)
@@ -589,7 +589,7 @@ namespace cihb
 		}
 
 		m_ReadSockets.erase(sockfd);
-		return false;
+		return true;
 	}
 
 	bool CNetworkThread::ExitInstance()

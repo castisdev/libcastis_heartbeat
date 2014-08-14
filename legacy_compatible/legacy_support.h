@@ -141,6 +141,10 @@ namespace cihb
 
 	//////////////////////////////////////////////////////////////////////////
 
+#ifdef _WIN32
+#pragma warning(push)
+#pragma warning(disable : 4512)
+#endif
 	class CNetworkThread : public CCiThread2
 	{
 	public:
@@ -205,4 +209,7 @@ namespace cihb
 		virtual bool ReceiveIntMessage(int sockfd, int *piReceivedMessage);
 		virtual bool OnMessage(int sockfd, int iMessage);
 	};
+#ifdef _WIN32
+#pragma warning(pop)
+#endif
 }
