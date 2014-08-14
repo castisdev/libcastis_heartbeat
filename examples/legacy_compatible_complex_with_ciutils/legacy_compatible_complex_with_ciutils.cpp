@@ -1,4 +1,4 @@
-#include "CiHBResponserWithCiUtils.h"
+#include "SampleHBClientComplex.h"
 
 int main(int /*argc*/, char* /*argv*/[])
 {
@@ -31,8 +31,8 @@ int main(int /*argc*/, char* /*argv*/[])
 	}
 #endif
 
-	CCiHBResponserWithCiUtils hbr("127.0.0.1", 8090, "127.0.0.1", 10);
-	hbr.RunThreadHere();
+	SampleHBClientComplex hbc("127.0.0.1", 8090, "127.0.0.1");
+	hbc.RunThreadHere();
 
 	return 0;
 }

@@ -2,7 +2,7 @@
 #include "CiHBResponser.h"
 #include "common_CiUtils.h"
 
-class CCiHBResponserWithCiUtils	: public CCiHBResponser, CCiThread2
+class CCiHBResponserWithCiUtils	: public CCiHBResponser, public CCiThread2
 {
 public:
 	CCiHBResponserWithCiUtils(const std::string& szRepresentativeIP,

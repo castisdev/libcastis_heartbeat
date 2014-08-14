@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 set(PROJECT_NAME CiHB)
 project(${PROJECT_NAME})
-set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost 1.56)
 # set(Boost_USE_MULTITHREADED TRUE)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)

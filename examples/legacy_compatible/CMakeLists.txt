@@ -17,4 +17,8 @@ endif(WIN32)
 file(GLOB SRCS "*.h" "*.cpp")
 	
 add_executable(${PROJECT_NAME} ${SRCS})
+if(WIN32)
 target_link_libraries(${PROJECT_NAME} CiHB)
+else(WIN32)
+target_link_libraries(${PROJECT_NAME} CiHB pthread)
+endif(WIN32)
