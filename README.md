@@ -1,6 +1,6 @@
 # SVM Heartbeat Responser
 
-`ServiceMonitor`의 Heartbeat 요청에 응답하기위한 연동 API
+**ServiceMonitor**의 Heartbeat 요청에 응답하기 위한 연동 라이브러리
 
 ## Example
 ```cpp
