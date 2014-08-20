@@ -15,18 +15,3 @@ int main()
 }
 
 ```
-
-## Dependency
-
-* legacy_compatible
-    * None
-
-* legacy_compatible_with_ciutils
-    * CiUtils
-    * Boost >= 1.33.1
-        * system
-
-* legacy_compatible_complex_with_ciutils
-    * CiUtils
-    * Boost >= 1.33.1
-        * system
