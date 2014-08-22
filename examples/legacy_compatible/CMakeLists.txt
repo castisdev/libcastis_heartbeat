@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 2.8)
 set(PROJECT_NAME example_legacy_compatible)
 project(${PROJECT_NAME})
+find_package(Boost)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 include_directories(
+  ${Boost_INCLUDE_DIRS}
   ../../legacy_compatible
 )
 if(WIN32)

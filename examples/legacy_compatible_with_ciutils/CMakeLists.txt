@@ -1,16 +1,17 @@
 cmake_minimum_required(VERSION 2.8)
 set(PROJECT_NAME example_legacy_compatible_with_ciutils)
 set(Boost_USE_STATIC_LIBS ON)
-find_package(Boost 1.33.1 COMPONENTS system REQUIRED)
+find_package(Boost 1.33.1 COMPONENTS filesystem system REQUIRED)
 project(${PROJECT_NAME})
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 include_directories(
+  ${Boost_INCLUDE_DIRS}
   ../../legacy_compatible
   ../Externals/CiUtils/Include
   ../Externals/CiUtils/Externals/Include
 )
 if(WIN32)
-add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_WARNINGS)
+add_definitions(-D_AFXDLL -D_UNICODE -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_WARNINGS)
 # Set compiler flags and options. 
 # Here it is setting the Visual Studio warning level to 4
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
