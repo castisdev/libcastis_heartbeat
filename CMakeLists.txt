@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8)
 
 set(PROJECT_NAME service_monitor_heartbeat_lib)
 project(${PROJECT_NAME})
+FIND_PACKAGE(Boost 1.33.1)
 
 # Turn on the ability to create folders to organize projects (.vcproj)
 # It creates "CMakePredefinedTargets" folder by default and adds CMake
