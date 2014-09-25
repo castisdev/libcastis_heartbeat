@@ -1,0 +1,8 @@
+centos32
+centos64
+cygwin
+lib
+msvc12
+msvc90
+Debug
+*.user

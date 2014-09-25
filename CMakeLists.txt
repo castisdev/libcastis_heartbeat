@@ -10,7 +10,9 @@ FIND_PACKAGE(Boost 1.33.1)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Sub-directories where more CMakeLists.txt exist
+add_subdirectory(asio_base)
 add_subdirectory(legacy_compatible)
+add_subdirectory(examples/asio_base)
 add_subdirectory(examples/legacy_compatible)
 add_subdirectory(examples/Externals/CiUtils)
 add_subdirectory(examples/legacy_compatible_with_ciutils)
