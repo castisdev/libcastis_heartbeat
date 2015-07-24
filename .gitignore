@@ -6,3 +6,6 @@ msvc12
 msvc90
 Debug
 *.user
+build/
+.cproject
+.project
