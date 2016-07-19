@@ -9,6 +9,11 @@ FIND_PACKAGE(Boost 1.33.1)
 # defined projects like INSTALL.vcproj and ZERO_CHECK.vcproj
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+if(WIN32)
+else(WIN32)
+add_definitions(-Wno-unused-variable)
+endif(WIN32)
+
 # Sub-directories where more CMakeLists.txt exist
 add_subdirectory(asio_base)
 add_subdirectory(legacy_compatible)

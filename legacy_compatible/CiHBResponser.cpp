@@ -152,7 +152,6 @@ bool CCiHBResponser::InitInstance()
 	if ( PollFDAdd( sockfd ) == false )
 #endif
 	{
-		/* ½ÇÆĞÇÏ¸é pReadSocketÀº destructorÀÇ m_ReadSockets[] Á¤¸® ·çÆ¾¿¡¼­ Á¤¸®µÈ´Ù */
 		return false;
 	}
 
@@ -161,8 +160,8 @@ bool CCiHBResponser::InitInstance()
 
 bool CCiHBResponser::OnReadSocketError(int /*sockfd*/)
 {
-	/* connected TCP socket ÀÌ ¾Æ´Ï¹Ç·Î
-	 * socketÀ» Á¤¸®ÇÏÁö ¾Ê´Â´Ù. */
+  /* connected TCP socket ì´ ì•„ë‹ˆë¯€ë¡œ
+	 * socketì„ ì •ë¦¬í•˜ì§€ ì•ŠëŠ”ë‹¤. */
 	return true;
 }
 
