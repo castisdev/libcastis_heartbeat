@@ -9,3 +9,5 @@ Debug
 build/
 .cproject
 .project
+eclipse/
+.settings/
