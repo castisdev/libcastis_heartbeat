@@ -14,13 +14,19 @@ HeartBeatSession::HeartBeatSession(boost::asio::io_service& io_service
 , hbPort_(hbPort)
 , processState_(CIHB_STATE_ALIVE)
 {
-	socket_->open(boost::asio::ip::udp::v4());
-	socket_->set_option(boost::asio::ip::udp::socket::reuse_address(true));
-	socket_->bind(boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(), hbPort_));
 }
 
 HeartBeatSession::~HeartBeatSession(void)
 {
+}
+
+void HeartBeatSession::start() {
+  socket_->open(boost::asio::ip::udp::v4());
+  socket_->set_option(boost::asio::ip::udp::socket::reuse_address(true));
+  socket_->bind(boost::asio::ip::udp::endpoint(boost::asio::ip::udp::v4(),
+                                               hbPort_));
+
+  do_read_request();
 }
 
 void HeartBeatSession::clear()

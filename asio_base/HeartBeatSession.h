@@ -33,7 +33,7 @@ public:
 	void SetProcessHWError();
 	void SetProcessSWError();
 	void SetProcessAlive();
-	void start() { do_read_request(); }
+	void start();
 	void clear();
 
 protected:

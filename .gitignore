@@ -10,3 +10,4 @@ build/
 .cproject
 .project
 eclipse/
+.settings/
