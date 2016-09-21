@@ -31,8 +31,12 @@ void HeartBeatSession::start() {
 
 void HeartBeatSession::clear()
 {
-	if ( socket_ )
-		socket_->close();
+	if ( socket_ ) {
+	  boost::system::error_code ec;
+		socket_->close(ec);
+		if (ec)
+		  handle_error(ec.value(), ec.message());
+	}
 	socket_.reset();
 }
 
