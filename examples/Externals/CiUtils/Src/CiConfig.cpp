@@ -35,7 +35,7 @@ CiConfig::~CiConfig()
 
 bool CiConfig::Open( const char* pszConfigFileName )
 {
-	//	openÇÏ±âÀü ±âÁ¸ ¸ðµç µ¥ÀÌÅÍµéÀ» ÃÊ±âÈ­ ÇÑ´Ù.
+	//	openï¿½Ï±ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Íµï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­ ï¿½Ñ´ï¿½.
 	m_szFileName = "";
 
 	if ( m_pFile != NULL )
@@ -46,7 +46,7 @@ bool CiConfig::Open( const char* pszConfigFileName )
 
 	Clear();
 
-	//	openµ¿ÀÛÀ» ÇÑ´Ù.
+	//	openï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ´ï¿½.
 	m_szFileName = pszConfigFileName;
 
 	m_pFile = fopen( pszConfigFileName , "r+t" );
@@ -188,7 +188,7 @@ bool CiConfig::WriteInt( const char* arg_pszKey , int iValue )
 	snprintf( bufValue, CiConfigNode::BUFFER_VALUE_SIZE-1, "%d", iValue);
 #endif
 	pszValue = TrimWhiteSpace(bufValue);
-	if ( pszValue == NULL || pszValue == '\0' ) {
+	if ( pszValue == NULL || *pszValue == '\0' ) {
 		return false;
 	}
 
@@ -334,7 +334,7 @@ bool CiConfig::Flush()
 
 bool CiConfig::Close()
 {
-	//	µð½ºÅ© °ø°£ÀÌ ºÎÁ· ÇÒ °æ¿ì cfg°¡ ³¯¶ó°¡´Â ¹ö±× ¼öÁ¤À» À§ÇØ Flush()¸¦ ÁÖ¼® Ã³¸®ÇÔ
+	//	ï¿½ï¿½Å© ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ cfgï¿½ï¿½ ï¿½ï¿½ï¿½ó°¡´ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Flush()ï¿½ï¿½ ï¿½Ö¼ï¿½ Ã³ï¿½ï¿½ï¿½ï¿½
 	//Flush();
 	if ( m_pFile != NULL )
 	{
@@ -342,14 +342,14 @@ bool CiConfig::Close()
 		m_pFile = NULL;
 	}
 
-	//	¸¸¾à.. openÇÏ´Ù°¡ ÆÄÀÏÀÌ¸§Àº µé¾î¿Ô´Âµ¥ openÀ» ½ÇÆÐÇÏ¿´°í, close¸¦ È£ÃâÇÏ°ÔµÇ¸é ÇØ´ç cfg´Â »èÁ¦µÉ°Í ÀÌ´Ù.
+	//	ï¿½ï¿½ï¿½ï¿½.. openï¿½Ï´Ù°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ì¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ô´Âµï¿½ openï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï¿ï¿½ï¿½ï¿½, closeï¿½ï¿½ È£ï¿½ï¿½ï¿½Ï°ÔµÇ¸ï¿½ ï¿½Ø´ï¿½ cfgï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½É°ï¿½ ï¿½Ì´ï¿½.
 	//if ( m_pHead == NULL )
 	//{
 	//	// No key - delete config file
 	//	remove( m_szFileName.c_str() );
 	//}
 
-	//	±×¸®°í close¸¦ Çß´Ù°í ÇØ¼­ ¹Ýµå½Ã open½Ã loadÇÑ °ªµéÀ» ±¸Áö Áö¿ï ÇÊ¿ä´Â ¾øÀ»°Í °°´Ù.
+	//	ï¿½×¸ï¿½ï¿½ï¿½ closeï¿½ï¿½ ï¿½ß´Ù°ï¿½ ï¿½Ø¼ï¿½ ï¿½Ýµï¿½ï¿½ openï¿½ï¿½ loadï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½.
 
 	return true;
 }
