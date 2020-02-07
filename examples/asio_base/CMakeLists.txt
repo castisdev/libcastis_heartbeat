@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 set(PROJECT_NAME example_asio_base)
 set(Boost_USE_STATIC_LIBS ON)
-find_package(Boost 1.40.0 COMPONENTS system date_time regex REQUIRED)
+find_package(Boost 1.40.0 COMPONENTS system REQUIRED)
 project(${PROJECT_NAME})
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 include_directories(
