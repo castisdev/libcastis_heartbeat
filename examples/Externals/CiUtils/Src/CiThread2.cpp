@@ -5,7 +5,6 @@
 #include "internal_CiUtils.h"
 
 #include "CiThread2.h"
-#include "CiLogger.h"
 
 #ifdef _WIN32
 #include <process.h>

@@ -24,8 +24,6 @@
 #include "NetUtil.h"
 #include "CiSafeString.h"
 
-#include "CiLogger.h"
-
 /* KSH for FIONBIO */
 #ifndef _WIN32
 #include <sys/ioctl.h>

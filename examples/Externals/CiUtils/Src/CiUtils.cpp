@@ -8,8 +8,6 @@
 #include <boost/algorithm/string/classification.hpp>
 #endif
 
-#include "CiLogger.h"
-
 #ifndef _WIN32
 #include <dirent.h>
 #include <sys/vfs.h>

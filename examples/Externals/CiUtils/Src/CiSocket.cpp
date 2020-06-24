@@ -6,7 +6,6 @@
 #include "CiSocket.h"
 #include "NetUtil.h"
 #include "CiSafeString.h"
-#include "CiLogger.h"
 
 #ifndef _WIN32
 #include <sys/poll.h>

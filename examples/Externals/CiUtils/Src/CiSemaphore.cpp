@@ -5,8 +5,6 @@
 #include "internal_CiUtils.h"
 #include "CiSemaphore.h"
 
-#include "CiLogger.h"
-
 #if defined(_WIN32) && defined(_DEBUG)
 #define new DEBUG_NEW
 #endif
