@@ -1,7 +1,7 @@
 #include "HeartBeatSession.h"
 
 #include <iostream>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/asio.hpp>
 
 HeartBeatSession::HeartBeatSession(boost::asio::io_service& io_service

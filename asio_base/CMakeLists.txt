@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.16.0)
 set(PROJECT_NAME hb_asio_base)
 project(${PROJECT_NAME})
 find_package(Boost)
